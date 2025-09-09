@@ -1,0 +1,14 @@
+{
+  "name": "custom-agent",
+  "module": "index.js",
+  "type": "module",
+  "scripts": {
+    
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
