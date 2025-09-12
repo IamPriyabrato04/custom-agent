@@ -2,13 +2,16 @@
   "name": "custom-agent",
   "module": "index.js",
   "type": "module",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.75",
+    "@langchain/groq": "^0.2.3",
+    "@langchain/langgraph": "^0.4.9"
   }
 }
