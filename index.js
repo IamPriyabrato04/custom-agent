@@ -1,7 +1,29 @@
 import { ChatGroq } from "@langchain/groq";
 import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import readline from "node:readline/promises";
+import { TavilySearch } from "@langchain/tavily";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import dotenv from "dotenv";
+dotenv.config();
 
+
+const tool = new TavilySearch({
+   maxResults: 3,
+   topic: "general",
+   // includeAnswer: false,
+   // includeRawContent: false,
+   // includeImages: false,
+   // includeImageDescriptions: false,
+   searchDepth: "basic",
+   // timeRange: "day",
+   // includeDomains: [],
+   // excludeDomains: [],
+});
+
+
+
+const tools = [tool];
+const toolNode = new ToolNode(tools);
 
 // initiallize the LLM
 const llm = new ChatGroq({
@@ -9,24 +31,39 @@ const llm = new ChatGroq({
    temperature: 0,
    maxRetries: 2,
    // other params..
-})
+}).bindTools(tools);
 
 // 1. call the model
 async function callModel(state) {
    console.log("calling LLM...");
    const response = await llm.invoke(state.messages);
    return { messages: [response] };
-}
+};
 
 // 2. Build the graph
 const workflow = new StateGraph(MessagesAnnotation)
    .addNode("agent", callModel)
-   .addEdge("__start__", "agent").addEdge("agent", "__end__");
+   .addNode("tool", toolNode)
+   .addEdge("__start__", "agent")
+   .addEdge("tool", "agent")
+   .addEdge("agent", "__end__")
+   .addConditionalEdges("agent", shouldContinue);
 
 
 // 3. compile and invoke the graph
 const app = workflow.compile();
 
+function shouldContinue(state) {
+   //put your condition here
+   // wherther to call tools or not
+   const lastMessage = state.messages[state.messages.length - 1];
+
+   if (lastMessage.tool_calls.length > 0) {
+      return "tool";
+   }
+
+   return "__end__";
+};
 
 
 async function main() {
@@ -47,6 +84,6 @@ async function main() {
    }
 
    rl.close();
-}
+};
 
 main();
