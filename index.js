@@ -3,9 +3,13 @@ import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import readline from "node:readline/promises";
 import { TavilySearch } from "@langchain/tavily";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { MemorySaver } from "@langchain/langgraph";
+
 import dotenv from "dotenv";
 dotenv.config();
 
+
+const memory = new MemorySaver();
 
 const tool = new TavilySearch({
    maxResults: 3,
@@ -51,7 +55,7 @@ const workflow = new StateGraph(MessagesAnnotation)
 
 
 // 3. compile and invoke the graph
-const app = workflow.compile();
+const app = workflow.compile({ checkpointer: memory });
 
 function shouldContinue(state) {
    //put your condition here
@@ -78,7 +82,11 @@ async function main() {
       }
       const finalState = await app.invoke({
          messages: [{ role: 'user', content: userInput }]
-      })
+      },
+         {
+            configurable: { thread_id: "1" }
+         }
+      )
       const lastMessage = finalState.messages[finalState.messages.length - 1];
       console.log("LLM: ", lastMessage.content);
    }
